@@ -1,0 +1,161 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "磨课助手"
+      }
+    },
+    {
+      "path": "pages/video-correction/index",
+      "style": {
+        "navigationBarTitleText": "视频纠偏"
+      }
+    },
+    {
+      "path": "pages/speech-recognition/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "语音识别"
+      }
+    },
+    {
+      "path": "pages/speech-synthesis/index",
+      "style": {
+        "navigationBarTitleText": "语音合成"
+      }
+    },
+    {
+      "path": "pages/virtual-classroom/index",
+      "style": {
+        "navigationBarTitleText": "虚拟课堂"
+      }
+    },
+    {
+      "path": "pages/virtual-classroom/select-script",
+      "style": {
+        "navigationBarTitleText": "选择逐字稿",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/virtual-classroom/record",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "录制"
+      }
+    },
+    {
+      "path": "pages/history/index",
+      "style": {
+        "navigationBarTitleText": "纠偏历史"
+      }
+    },
+    {
+      "path": "pages/history/detail",
+      "style": {
+        "navigationBarTitleText": "分析详情",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/lesson-plan/upload",
+      "style": {
+        "navigationBarTitleText": "上传教案",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/lesson-plan/index",
+      "style": {
+        "navigationBarTitleText": "教案列表",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/lesson-plan/detail",
+      "style": {
+        "navigationBarTitleText": "教案详情",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/student-portrait/index",
+      "style": {
+        "navigationBarTitleText": "学生画像",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/student-portrait/add",
+      "style": {
+        "navigationBarTitleText": "添加学生",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/classroom/index",
+      "style": {
+        "navigationBarTitleText": "课堂管理",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/classroom/add",
+      "style": {
+        "navigationBarTitleText": "创建课堂",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/classroom/detail",
+      "style": {
+        "navigationBarTitleText": "课堂详情",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/teacher-portrait/index",
+      "style": {
+        "navigationBarTitleText": "教师画像",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/teacher-portrait/detail",
+      "style": {
+        "navigationBarTitleText": "画像详情",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/video-example/history",
+      "style": {
+        "navigationBarTitleText": "历史视频范例",
+        "navigationBarBackButtonText": "返回"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationBarBackButtonText": "返回"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "磨课助手",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f5f5f5"
+  }
+}
+
+

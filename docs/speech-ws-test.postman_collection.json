@@ -1,0 +1,188 @@
+{
+	"info": {
+		"_postman_id": "speech-ws-test-001",
+		"name": "语音识别 WebSocket 测试",
+		"description": "测试语音服务 WebSocket 连接认证",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "WebSocket 连接测试 - api-key Header",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "api-key",
+						"value": "300000775:568f52f31bf0782018145f7dc56c3afb",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "ws://speech-internal.tal.com/v1/ws",
+					"protocol": "ws",
+					"host": [
+						"speech-internal",
+						"tal",
+						"com"
+					],
+					"path": [
+						"v1",
+						"ws"
+					]
+				},
+				"description": "使用 api-key header 认证"
+			},
+			"response": []
+		},
+		{
+			"name": "WebSocket 连接测试 - Basic Auth",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic MzAwMDAwNzc1OjU2OGY1MmYzMWJmMDc4MjAxODE0NWY3ZGM1NmMzYWZi",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "ws://speech-internal.tal.com/v1/ws",
+					"protocol": "ws",
+					"host": [
+						"speech-internal",
+						"tal",
+						"com"
+					],
+					"path": [
+						"v1",
+						"ws"
+					]
+				},
+				"description": "使用 Basic Authorization 认证 (Base64 编码的 api-key)"
+			},
+			"response": []
+		},
+		{
+			"name": "WebSocket 连接测试 - X-NLS-Token",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-NLS-Token",
+						"value": "568f52f31bf0782018145f7dc56c3afb",
+						"type": "text"
+					},
+					{
+						"key": "appkey",
+						"value": "300000775",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "ws://speech-internal.tal.com/v1/ws",
+					"protocol": "ws",
+					"host": [
+						"speech-internal",
+						"tal",
+						"com"
+					],
+					"path": [
+						"v1",
+						"ws"
+					]
+				},
+				"description": "使用 X-NLS-Token + appkey header 认证"
+			},
+			"response": []
+		},
+		{
+			"name": "WebSocket 连接测试 - URL参数",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "ws://speech-internal.tal.com/v1/ws?api-key=300000775:568f52f31bf0782018145f7dc56c3afb",
+					"protocol": "ws",
+					"host": [
+						"speech-internal",
+						"tal",
+						"com"
+					],
+					"path": [
+						"v1",
+						"ws"
+					],
+					"query": [
+						{
+							"key": "api-key",
+							"value": "300000775:568f52f31bf0782018145f7dc56c3afb"
+						}
+					]
+				},
+				"description": "使用 URL 参数传递 api-key"
+			},
+			"response": []
+		},
+		{
+			"name": "WebSocket 连接测试 - 多Header组合",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "api-key",
+						"value": "300000775:568f52f31bf0782018145f7dc56c3afb",
+						"type": "text"
+					},
+					{
+						"key": "X-NLS-Token",
+						"value": "568f52f31bf0782018145f7dc56c3afb",
+						"type": "text"
+					},
+					{
+						"key": "appkey",
+						"value": "300000775",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Basic MzAwMDAwNzc1OjU2OGY1MmYzMWJmMDc4MjAxODE0NWY3ZGM1NmMzYWZi",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "ws://speech-internal.tal.com/v1/ws",
+					"protocol": "ws",
+					"host": [
+						"speech-internal",
+						"tal",
+						"com"
+					],
+					"path": [
+						"v1",
+						"ws"
+					]
+				},
+				"description": "同时使用多个认证 Header"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "appId",
+			"value": "300000775"
+		},
+		{
+			"key": "secret",
+			"value": "568f52f31bf0782018145f7dc56c3afb"
+		},
+		{
+			"key": "apiKey",
+			"value": "300000775:568f52f31bf0782018145f7dc56c3afb"
+		}
+	]
+}
+
+
+
+

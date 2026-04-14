@@ -1,0 +1,17 @@
+{
+    "name" : "磨课助手",
+    "appid" : "__UNI__2703B50",
+    "description" : "AI 磨课助手 - 视频纠偏与虚拟课堂",
+    "versionName" : "1.0.0",
+    "versionCode" : "100",
+    "transformPx" : false,
+    "app-plus" : {
+        "orientation" : [ "portrait-primary" ]
+    },
+    "mp-weixin" : {
+        "appid" : "",
+        "setting" : {
+            "urlCheck" : false
+        }
+    }
+}
