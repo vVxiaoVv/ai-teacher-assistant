@@ -36,6 +36,16 @@ public class StudentPortraitDto {
     private String characteristics;
 
     /**
+     * 学生年龄
+     */
+    private Integer age;
+
+    /**
+     * 历史考试信息（JSON格式）
+     */
+    private String examHistory;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

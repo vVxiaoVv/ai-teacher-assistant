@@ -39,6 +39,18 @@ public class StudentPortrait {
     private String characteristics;
 
     /**
+     * 学生年龄
+     */
+    @Column(name = "age")
+    private Integer age;
+
+    /**
+     * 历史考试信息（JSON格式存储）
+     */
+    @Column(name = "exam_history", columnDefinition = "TEXT")
+    private String examHistory;
+
+    /**
      * 创建时间
      */
     @Column(name = "create_time", nullable = false)

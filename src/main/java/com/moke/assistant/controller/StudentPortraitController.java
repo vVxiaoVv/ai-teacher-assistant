@@ -59,13 +59,17 @@ public class StudentPortraitController {
      * @param studentName 学生姓名
      * @param photoUrl 学生照片URL
      * @param characteristics 学生特点描述
+     * @param age 学生年龄
+     * @param examHistory 历史考试信息（JSON格式）
      * @return 保存的学生画像实体
      */
     @PostMapping("/create")
     public ResponseEntity<StudentPortrait> createStudentPortrait(
             @RequestParam("studentName") String studentName,
             @RequestParam(required = false) String photoUrl,
-            @RequestParam(required = false) String characteristics) {
+            @RequestParam(required = false) String characteristics,
+            @RequestParam(required = false) Integer age,
+            @RequestParam(required = false) String examHistory) {
 
         if (studentName == null || studentName.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(null);
@@ -74,7 +78,9 @@ public class StudentPortraitController {
         StudentPortrait savedStudentPortrait = studentPortraitService.createStudentPortrait(
                 studentName.trim(),
                 photoUrl,
-                characteristics
+                characteristics,
+                age,
+                examHistory
         );
 
         return ResponseEntity.ok(savedStudentPortrait);
@@ -87,6 +93,8 @@ public class StudentPortraitController {
      * @param studentName 学生姓名
      * @param photoUrl 学生照片URL
      * @param characteristics 学生特点描述
+     * @param age 学生年龄
+     * @param examHistory 历史考试信息（JSON格式）
      * @return 更新后的学生画像实体
      */
     @PutMapping("/update/{id}")
@@ -94,7 +102,9 @@ public class StudentPortraitController {
             @PathVariable("id") Long id,
             @RequestParam("studentName") String studentName,
             @RequestParam(required = false) String photoUrl,
-            @RequestParam(required = false) String characteristics) {
+            @RequestParam(required = false) String characteristics,
+            @RequestParam(required = false) Integer age,
+            @RequestParam(required = false) String examHistory) {
 
         if (id == null || studentName == null || studentName.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(null);
@@ -104,7 +114,9 @@ public class StudentPortraitController {
                 id,
                 studentName.trim(),
                 photoUrl,
-                characteristics
+                characteristics,
+                age,
+                examHistory
         );
 
         if (updatedStudentPortrait == null) {

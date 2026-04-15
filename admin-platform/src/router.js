@@ -32,6 +32,11 @@ const routes = [
         component: StudentPortraitList
       },
       {
+        path: 'student-portrait/:id',
+        name: 'StudentPortraitDetail',
+        component: () => import('./views/StudentPortraitDetail.vue')
+      },
+      {
         path: 'lesson-plan',
         redirect: '/lesson-plan/list'
       },

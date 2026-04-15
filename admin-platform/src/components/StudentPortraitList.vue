@@ -64,6 +64,8 @@
             :key="student.id"
             class="portrait-card"
             shadow="hover"
+            @click="handleViewDetail(student)"
+            style="cursor: pointer"
           >
             <div class="card-header-section">
               <el-avatar
@@ -146,6 +148,16 @@
           />
         </el-form-item>
 
+        <el-form-item label="年龄" prop="age">
+          <el-input-number
+            v-model="form.age"
+            :min="1"
+            :max="120"
+            placeholder="请输入年龄"
+            style="width: 100%"
+          />
+        </el-form-item>
+
         <el-form-item label="学生头像">
           <div class="avatar-url-section">
             <el-input
@@ -188,6 +200,17 @@
           </div>
         </el-form-item>
 
+        <el-form-item label="历史考试信息">
+          <el-input
+            v-model="form.examHistory"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入学生的历史考试信息（可选）"
+            maxlength="2000"
+            show-word-limit
+          />
+        </el-form-item>
+
         <el-form-item label="概括描述">
           <el-input
             v-model="form.characteristics"
@@ -210,9 +233,12 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, User, Picture } from '@element-plus/icons-vue'
 import axios from 'axios'
+
+const router = useRouter()
 
 const loading = ref(false)
 const studentList = ref([])
@@ -236,6 +262,8 @@ const form = reactive({
   id: null,
   studentName: '',
   photoUrl: '',
+  age: null,
+  examHistory: '',
   characteristics: ''
 })
 
@@ -375,6 +403,8 @@ const handleAdd = () => {
   form.id = null
   form.studentName = ''
   form.photoUrl = ''
+  form.age = null
+  form.examHistory = ''
   form.characteristics = ''
   previewError.value = false
   dialogVisible.value = true
@@ -386,9 +416,16 @@ const handleEdit = (student) => {
   form.id = student.id
   form.studentName = student.studentName || ''
   form.photoUrl = student.photoUrl || ''
+  form.age = student.age || null
+  form.examHistory = student.examHistory || ''
   form.characteristics = student.characteristics || ''
   previewError.value = false
   dialogVisible.value = true
+}
+
+// 查看详情
+const handleViewDetail = (student) => {
+  router.push(`/student-portrait/${student.id}`)
 }
 
 // 删除
@@ -459,6 +496,12 @@ const handleSubmit = async () => {
         if (form.photoUrl) {
           params.append('photoUrl', form.photoUrl)
         }
+        if (form.age) {
+          params.append('age', form.age)
+        }
+        if (form.examHistory) {
+          params.append('examHistory', form.examHistory.trim())
+        }
         if (form.characteristics) {
           params.append('characteristics', form.characteristics.trim())
         }
@@ -502,6 +545,8 @@ const handleCloseDialog = () => {
   form.id = null
   form.studentName = ''
   form.photoUrl = ''
+  form.age = null
+  form.examHistory = ''
   form.characteristics = ''
   previewError.value = false
   isEditMode.value = false

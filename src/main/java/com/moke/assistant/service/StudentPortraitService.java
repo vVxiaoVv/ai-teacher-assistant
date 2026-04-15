@@ -16,9 +16,11 @@ public interface StudentPortraitService {
      * @param studentName 学生姓名
      * @param photoUrl 学生照片URL
      * @param characteristics 学生特点描述
+     * @param age 学生年龄
+     * @param examHistory 历史考试信息（JSON格式）
      * @return 保存的学生画像实体
      */
-    StudentPortrait createStudentPortrait(String studentName, String photoUrl, String characteristics);
+    StudentPortrait createStudentPortrait(String studentName, String photoUrl, String characteristics, Integer age, String examHistory);
 
     /**
      * 更新学生画像
@@ -27,9 +29,11 @@ public interface StudentPortraitService {
      * @param studentName 学生姓名
      * @param photoUrl 学生照片URL
      * @param characteristics 学生特点描述
+     * @param age 学生年龄
+     * @param examHistory 历史考试信息（JSON格式）
      * @return 更新后的学生画像实体
      */
-    StudentPortrait updateStudentPortrait(Long id, String studentName, String photoUrl, String characteristics);
+    StudentPortrait updateStudentPortrait(Long id, String studentName, String photoUrl, String characteristics, Integer age, String examHistory);
 
     /**
      * 根据ID查询学生画像

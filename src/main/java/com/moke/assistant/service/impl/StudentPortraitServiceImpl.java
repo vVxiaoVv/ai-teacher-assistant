@@ -30,24 +30,28 @@ public class StudentPortraitServiceImpl implements StudentPortraitService {
     }
 
     @Override
-    public StudentPortrait createStudentPortrait(String studentName, String photoUrl, String characteristics) {
+    public StudentPortrait createStudentPortrait(String studentName, String photoUrl, String characteristics, Integer age, String examHistory) {
         StudentPortrait studentPortrait = new StudentPortrait();
         studentPortrait.setStudentName(studentName);
         studentPortrait.setPhotoUrl(photoUrl);
         studentPortrait.setCharacteristics(characteristics);
+        studentPortrait.setAge(age);
+        studentPortrait.setExamHistory(examHistory);
         studentPortrait.setCreateUserId(UserContext.getUserId());
         studentPortrait.setUpdateUserId(UserContext.getUserId());
         return studentPortraitRepository.save(studentPortrait);
     }
 
     @Override
-    public StudentPortrait updateStudentPortrait(Long id, String studentName, String photoUrl, String characteristics) {
+    public StudentPortrait updateStudentPortrait(Long id, String studentName, String photoUrl, String characteristics, Integer age, String examHistory) {
         Optional<StudentPortrait> optionalStudentPortrait = studentPortraitRepository.findById(id);
         if (optionalStudentPortrait.isPresent()) {
             StudentPortrait studentPortrait = optionalStudentPortrait.get();
             studentPortrait.setStudentName(studentName);
             studentPortrait.setPhotoUrl(photoUrl);
             studentPortrait.setCharacteristics(characteristics);
+            studentPortrait.setAge(age);
+            studentPortrait.setExamHistory(examHistory);
             studentPortrait.setUpdateUserId(UserContext.getUserId());
             return studentPortraitRepository.save(studentPortrait);
         }
@@ -100,6 +104,8 @@ public class StudentPortraitServiceImpl implements StudentPortraitService {
                     dto.setStudentName(studentPortrait.getStudentName());
                     dto.setPhotoUrl(studentPortrait.getPhotoUrl());
                     dto.setCharacteristics(studentPortrait.getCharacteristics());
+                    dto.setAge(studentPortrait.getAge());
+                    dto.setExamHistory(studentPortrait.getExamHistory());
                     // 截取特点描述前100字符作为摘要
                     String characteristicsSummary = studentPortrait.getCharacteristics() != null && studentPortrait.getCharacteristics().length() > 100 ?
                             studentPortrait.getCharacteristics().substring(0, 100) + "..." : studentPortrait.getCharacteristics();

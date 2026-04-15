@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS `student_portrait` (
                                                   `student_name` VARCHAR(100) NOT NULL COMMENT '学生姓名',
     `photo_url` VARCHAR(500) COMMENT '学生照片URL',
     `characteristics` TEXT COMMENT '学生特点描述',
+    `age` INT COMMENT '学生年龄',
+    `exam_history` TEXT COMMENT '历史考试信息（JSON格式）',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `create_user_id` BIGINT COMMENT '创建者ID',
@@ -59,6 +61,14 @@ CREATE TABLE IF NOT EXISTS `student_portrait` (
     KEY `idx_create_time` (`create_time`),
     KEY `idx_create_user_id` (`create_user_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学生画像表';
+
+-- ============================================
+-- 更新学生画像表（添加新字段）
+-- ============================================
+-- 如果表已存在但缺少age字段，添加age字段
+ALTER TABLE `student_portrait` ADD COLUMN IF NOT EXISTS `age` INT COMMENT '学生年龄';
+-- 如果表已存在但缺少exam_history字段，添加exam_history字段
+ALTER TABLE `student_portrait` ADD COLUMN IF NOT EXISTS `exam_history` TEXT COMMENT '历史考试信息（JSON格式）';
 
 -- ============================================
 -- 4. 教案表
