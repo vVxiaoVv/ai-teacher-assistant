@@ -3,7 +3,7 @@
 
     <!-- 统计卡片 -->
     <div class="stats-grid">
-      <el-card class="stat-card" shadow="hover">
+      <el-card class="stat-card" shadow="hover" @click="navigateTo('student-portrait')">
         <div class="stat-content">
           <div class="stat-icon student-icon">
             <el-icon><User /></el-icon>
@@ -15,7 +15,7 @@
         </div>
       </el-card>
 
-      <el-card class="stat-card" shadow="hover">
+      <el-card class="stat-card" shadow="hover" @click="navigateTo('lesson-plan/list')">
         <div class="stat-content">
           <div class="stat-icon lesson-icon">
             <el-icon><Document /></el-icon>
@@ -27,7 +27,7 @@
         </div>
       </el-card>
 
-      <el-card class="stat-card" shadow="hover">
+      <el-card class="stat-card" shadow="hover" @click="navigateTo('video-examples')">
         <div class="stat-content">
           <div class="stat-icon video-icon">
             <el-icon><VideoCamera /></el-icon>
@@ -66,10 +66,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Document, VideoCamera, Clock, SuccessFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { getCookie } from '@/utils'
+
+const router = useRouter()
 
 const username = ref(getCookie('username') || '管理员')
 
@@ -107,21 +110,24 @@ const getActivityIcon = (type) => {
   return iconMap[type] || Clock
 }
 
+// 导航到指定页面
+const navigateTo = (path) => {
+  router.push(`/${path}`)
+}
+
 // 获取统计数据
 const fetchStats = async () => {
   try {
-    // TODO: 替换为实际API
-    // const response = await axios.get('/api/dashboard/stats')
-    // stats.value = response.data
-    
-    // 模拟数据
-    stats.value = {
-      studentCount: 125,
-      lessonCount: 89,
-      videoCount: 36
-    }
+    const response = await axios.get('/api/dashboard/stats')
+    stats.value = response.data
   } catch (error) {
     console.error('获取统计数据失败:', error)
+    // 失败时使用默认值
+    stats.value = {
+      studentCount: 0,
+      lessonCount: 0,
+      videoCount: 0
+    }
   }
 }
 
