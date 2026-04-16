@@ -67,7 +67,7 @@
             <el-icon><VideoCamera /></el-icon>
             <template #title>视频范例管理</template>
           </el-menu-item>
-          
+        </el-menu>
       </aside>
 
       <!-- 主内容区 -->
