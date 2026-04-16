@@ -18,14 +18,15 @@
           />
         </el-form-item>
 
-        <el-form-item label="关联课堂" prop="classroomId">
+        <el-form-item label="关联课堂">
           <el-select
             v-model="form.classroomId"
-            placeholder="请选择关联课堂"
+            placeholder="请选择关联课堂（可选）"
             style="width: 500px"
             filterable
             :loading="classroomLoading"
             @focus="loadClassrooms"
+            clearable
           >
             <el-option
               v-for="classroom in classroomList"
@@ -34,9 +35,6 @@
               :value="classroom.id"
             />
           </el-select>
-          <div v-if="!hasClassrooms && !classroomLoading" style="margin-top: 8px; color: #909399; font-size: 12px">
-            暂无课堂，<el-link type="primary" :underline="false" @click="goToCreateClassroom">去创建课堂</el-link>
-          </div>
         </el-form-item>
 
         <el-form-item label="上传文件">
@@ -65,6 +63,7 @@
             上传教案
           </el-button>
           <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+          <el-button @click="handleBack">返回列表</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -86,7 +85,6 @@ const submitting = ref(false)
 const selectedFile = ref(null)
 const classroomList = ref([])
 const classroomLoading = ref(false)
-const hasClassrooms = ref(true)
 
 const form = reactive({
   title: '',
@@ -97,15 +95,11 @@ const rules = {
   title: [
     { required: true, message: '请输入教案标题', trigger: 'blur' },
     { min: 1, max: 200, message: '标题长度在 1 到 200 个字符', trigger: 'blur' }
-  ],
-  classroomId: [
-    { required: true, message: '请选择关联课堂', trigger: 'change' }
   ]
 }
 
-// 加载课堂列表
 const loadClassrooms = async () => {
-  if (classroomList.value.length > 0) return // 已加载过，不再重复加载
+  if (classroomList.value.length > 0) return
   
   classroomLoading.value = true
   try {
@@ -118,29 +112,20 @@ const loadClassrooms = async () => {
     
     if (response.status === 200 && response.data) {
       classroomList.value = response.data.content || []
-      hasClassrooms.value = classroomList.value.length > 0
     }
   } catch (error) {
     console.error('加载课堂列表失败:', error)
-    hasClassrooms.value = false
   } finally {
     classroomLoading.value = false
   }
-}
-
-// 跳转到创建课堂页面
-const goToCreateClassroom = () => {
-  router.push('/classroom/add')
 }
 
 onMounted(() => {
   loadClassrooms()
 })
 
-// 从文件名提取标题（去掉扩展名）
 const extractTitleFromFilename = (filename) => {
   if (!filename) return ''
-  // 去掉扩展名
   const lastDotIndex = filename.lastIndexOf('.')
   if (lastDotIndex > 0) {
     return filename.substring(0, lastDotIndex)
@@ -148,10 +133,8 @@ const extractTitleFromFilename = (filename) => {
   return filename
 }
 
-// 处理文件选择
 const handleFileChange = (file) => {
   selectedFile.value = file.raw
-  // 自动填充标题（如果标题为空）
   if (!form.title || form.title.trim() === '') {
     const filename = file.name
     const title = extractTitleFromFilename(filename)
@@ -160,21 +143,13 @@ const handleFileChange = (file) => {
   }
 }
 
-// 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
   
   await formRef.value.validate(async (valid) => {
     if (valid) {
-      // 检查是否选择了文件
       if (!selectedFile.value) {
         ElMessage.warning('请先选择教案文件')
-        return
-      }
-      
-      // 检查是否选择了课堂
-      if (!form.classroomId) {
-        ElMessage.warning('请选择关联课堂')
         return
       }
       
@@ -183,7 +158,9 @@ const handleSubmit = async () => {
         const formData = new FormData()
         formData.append('title', form.title.trim())
         formData.append('content', selectedFile.value)
-        formData.append('classroomId', form.classroomId)
+        if (form.classroomId) {
+          formData.append('classroomId', form.classroomId)
+        }
         
         const response = await axios.post('/api/lesson-plan/upload', formData, {
           headers: {
@@ -195,25 +172,33 @@ const handleSubmit = async () => {
           const lessonPlanId = response.data.id
           ElMessage.success('教案上传成功，正在生成逐字稿...')
           
-          // 自动生成逐字稿
           try {
             const scriptResponse = await axios.post(`/api/script/generate/${lessonPlanId}`)
             if (scriptResponse.status === 200 && scriptResponse.data) {
               ElMessage.success('逐字稿生成成功')
+              router.push(`/script/${scriptResponse.data.id}`)
+              return
             } else {
               ElMessage.warning('教案上传成功，但逐字稿生成失败')
             }
           } catch (scriptError) {
             console.error('生成逐字稿失败:', scriptError)
-            ElMessage.warning('教案上传成功，但逐字稿生成失败：' + (scriptError.response?.data || scriptError.message || '未知错误'))
+            ElMessage.warning('教案上传成功，逐字稿正在后台生成，请稍后在列表中查看')
           }
           
-          // 跳转到教案列表页
-          router.push('/lesson-plan/list')
+          router.push('/lesson-plan')
         }
       } catch (error) {
         console.error('上传失败:', error)
-        ElMessage.error(error.response?.data?.message || '上传失败，请稍后重试')
+        let errorMsg = '上传失败，请稍后重试'
+        if (error.response?.data) {
+          if (typeof error.response.data === 'string') {
+            errorMsg = error.response.data
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message
+          }
+        }
+        ElMessage.error(errorMsg)
       } finally {
         submitting.value = false
       }
@@ -221,7 +206,10 @@ const handleSubmit = async () => {
   })
 }
 
-// 重置表单
+const handleBack = () => {
+  router.push('/lesson-plan')
+}
+
 const handleReset = () => {
   formRef.value?.resetFields()
   uploadRef.value?.clearFiles()
@@ -251,9 +239,3 @@ const handleReset = () => {
   }
 }
 </style>
-
-
-
-
-
-

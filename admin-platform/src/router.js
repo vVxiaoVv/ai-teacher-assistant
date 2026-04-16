@@ -37,6 +37,18 @@ const routes = [
         component: () => import('./views/StudentPortraitDetail.vue')
       },
       {
+        path: 'lesson-plan',
+        name: 'LessonPlanList',
+        component: () => import('./views/LessonPlanList.vue')
+      },
+      {
+        path: 'lesson-plan/upload',
+        name: 'LessonPlanUpload',
+        component: () => import('./views/LessonPlanUpload.vue')
+      },
+      {
+        path: 'video-examples',
+        name: 'VideoExamples',
         component: () => import('./views/VideoExamples.vue')
       },
       {
@@ -64,23 +76,18 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫，验证登录状态
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    // 检查是否有token、userId或username（从Cookie中获取）
     const token = getCookie('token')
     const userId = getCookie('userId')
     const username = getCookie('username')
     
     if (!token && !userId && !username) {
-      // 没有认证信息，重定向到登录页
       next({ path: '/login' })
     } else {
-      // 有认证信息，继续访问
       next()
     }
   } else {
-    // 不需要认证的页面，直接访问
     next()
   }
 })

@@ -1,5 +1,6 @@
 package com.moke.assistant.service.impl;
 
+import com.moke.assistant.common.utils.UserContext;
 import com.moke.assistant.dto.LessonPlanDto;
 import com.moke.assistant.dto.PageResultDto;
 import com.moke.assistant.entity.LessonPlan;
@@ -14,14 +15,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 教案服务实现类
- */
 @Service
 public class LessonPlanServiceImpl implements LessonPlanService {
 
     private final LessonPlanRepository lessonPlanRepository;
-
 
     @Autowired
     public LessonPlanServiceImpl(LessonPlanRepository lessonPlanRepository) {
@@ -29,10 +26,17 @@ public class LessonPlanServiceImpl implements LessonPlanService {
     }
 
     @Override
-    public LessonPlan uploadLessonPlan(String title, String content) {
+    public LessonPlan uploadLessonPlan(String title, String content, Long classroomId) {
         LessonPlan lessonPlan = new LessonPlan();
         lessonPlan.setTitle(title);
         lessonPlan.setContent(content);
+        lessonPlan.setClassroomId(classroomId);
+        
+        Long userId = UserContext.getUserId();
+        if (userId != null) {
+            lessonPlan.setCreateUserId(userId);
+        }
+        
         return lessonPlanRepository.save(lessonPlan);
     }
 
@@ -43,7 +47,6 @@ public class LessonPlanServiceImpl implements LessonPlanService {
 
     @Override
     public PageResultDto<LessonPlanDto> getLessonPlanList(String title, String startTime, String endTime, Pageable pageable) {
-        // 解析时间参数
         LocalDateTime start = null;
         LocalDateTime end = null;
 
@@ -51,7 +54,6 @@ public class LessonPlanServiceImpl implements LessonPlanService {
             try {
                 start = LocalDateTime.parse(startTime.trim());
             } catch (Exception e) {
-                // 忽略解析错误，使用null代替
             }
         }
 
@@ -59,32 +61,26 @@ public class LessonPlanServiceImpl implements LessonPlanService {
             try {
                 end = LocalDateTime.parse(endTime.trim());
             } catch (Exception e) {
-                // 忽略解析错误，使用null代替
             }
         }
 
-        // 处理title参数
         String titleParam = (title != null && !title.trim().isEmpty()) ? title.trim() : null;
-
-        // 查询数据
         Page<LessonPlan> pageResult = lessonPlanRepository.findByConditions(titleParam, start, end, pageable);
 
-        // 转换为DTO
         List<LessonPlanDto> content = pageResult.getContent().stream()
                 .map(lessonPlan -> {
                     LessonPlanDto dto = new LessonPlanDto();
                     dto.setId(lessonPlan.getId());
                     dto.setTitle(lessonPlan.getTitle());
-                    // 截取内容前100字符作为摘要
                     String contentSummary = lessonPlan.getContent().length() > 100 ? 
                             lessonPlan.getContent().substring(0, 100) + "..." : lessonPlan.getContent();
                     dto.setContentSummary(contentSummary);
                     dto.setUploadTime(lessonPlan.getUploadTime());
+                    dto.setClassroomId(lessonPlan.getClassroomId());
                     return dto;
                 })
                 .collect(Collectors.toList());
 
-        // 构建分页结果
         PageResultDto<LessonPlanDto> result = new PageResultDto<>();
         result.setContent(content);
         result.setTotalElements(pageResult.getTotalElements());

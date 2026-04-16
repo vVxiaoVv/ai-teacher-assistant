@@ -16,9 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-/**
- * 教案控制器
- */
 @RestController
 @RequestMapping("/api/lesson-plan")
 public class LessonPlanController {
@@ -34,54 +31,44 @@ public class LessonPlanController {
         this.fileParseService = fileParseService;
     }
 
-    /**
-     * 上传教案
-     *
-     * @param title   教案标题
-     * @param title   教案标题
-     * @param content 教案文件
     @PostMapping("/upload")
-    public ResponseEntity<LessonPlan> uploadLessonPlan(
+    public ResponseEntity<?> uploadLessonPlan(
             @RequestParam("title") String title,
-            @RequestParam("content") MultipartFile content) {
-            @RequestParam("content") MultipartFile content) {
-            @RequestParam("content") MultipartFile content) {
-            return ResponseEntity.badRequest().body(null);
-            return ResponseEntity.badRequest().body(null);
-        }
-
-            return ResponseEntity.badRequest().body(null);
-            if (!fileParseService.isSupported(content.getOriginalFilename())) {
-                logger.warn("不支持的文件类型: {}", content.getOriginalFilename());
-                return ResponseEntity.badRequest().body(null);
-            // 检查文件类型是否支持
+            @RequestParam("content") MultipartFile content,
+            @RequestParam(value = "classroomId", required = false) Long classroomId) {
+        
+        try {
+            if (content == null || content.isEmpty()) {
+                return ResponseEntity.badRequest().body("教案文件不能为空");
             }
-
-                return ResponseEntity.badRequest().body(null);
+            
+            String originalFilename = content.getOriginalFilename();
+            if (!fileParseService.isSupported(originalFilename)) {
+                logger.warn("不支持的文件类型: {}", originalFilename);
+                return ResponseEntity.badRequest().body("不支持的文件类型，仅支持 .txt, .doc, .docx, .pdf");
+            }
+            
             String contentString = fileParseService.parseFileToString(content);
             
-            // 解析文件内容为String
             if (contentString == null || contentString.trim().isEmpty()) {
                 logger.warn("解析后的文件内容为空");
-                return ResponseEntity.badRequest().body(null);
+                return ResponseEntity.badRequest().body("文件内容为空，无法解析");
             }
-                return ResponseEntity.badRequest().body(null);
-            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(title.trim(), contentString.trim());
+            
+            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(
+                    title.trim(), 
+                    contentString.trim(), 
+                    classroomId
+            );
             logger.info("教案上传成功，ID: {}, 标题: {}", savedLessonPlan.getId(), savedLessonPlan.getTitle());
-            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(title.trim(), contentString.trim());
+            return ResponseEntity.ok(savedLessonPlan);
+            
+        } catch (Exception e) {
             logger.error("上传教案失败: {}", e.getMessage(), e);
-            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(title.trim(), contentString.trim());
-            logger.info("教案上传成功，ID: {}, 标题: {}", savedLessonPlan.getId(), savedLessonPlan.getTitle());
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.internalServerError().body("上传失败: " + e.getMessage());
         }
     }
-            return ResponseEntity.internalServerError().body(null);
-    /**
-     * 根据ID查询教案详情
-            return ResponseEntity.internalServerError().body(null);
-     * @param id 教案ID
-     * @return 教案实体
-     */
+
     @GetMapping("/{id}")
     public ResponseEntity<LessonPlan> getLessonPlanById(@PathVariable("id") Long id) {
         LessonPlan lessonPlan = lessonPlanService.getLessonPlanById(id);
@@ -91,16 +78,6 @@ public class LessonPlanController {
         return ResponseEntity.ok(lessonPlan);
     }
 
-    /**
-     * 查询教案列表（分页+条件查询）
-     *
-     * @param title     标题模糊查询（可选）
-     * @param startTime 开始时间（可选）
-     * @param endTime   结束时间（可选）
-     * @param page      页码（从0开始，默认0）
-     * @param size      每页大小（默认10）
-     * @return 分页结果
-     */
     @GetMapping("/list")
     public ResponseEntity<PageResultDto<LessonPlanDto>> getLessonPlanList(
             @RequestParam(required = false) String title,
@@ -108,16 +85,14 @@ public class LessonPlanController {
             @RequestParam(required = false) String endTime,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
-
-        // 确保页码和每页大小的有效性
+        
         page = Math.max(0, page);
         size = Math.max(1, Math.min(50, size));
-
+        
         Pageable pageable = PageRequest.of(page, size);
         PageResultDto<LessonPlanDto> result = lessonPlanService.getLessonPlanList(
-        // 确保页码和每页大小的有效性
                 title, startTime, endTime, pageable);
-
+        
         return ResponseEntity.ok(result);
     }
 }
