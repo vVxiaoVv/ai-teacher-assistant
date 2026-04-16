@@ -41,14 +41,4 @@ speech:
     url: ws://speech-internal.tal.com/v1/ws
     api-key: ${SPEECH_API_KEY:300000775:568f52f31bf0782018145f7dc56c3afb}
 
-# AI服务配置
-ai:
-  service:
-    url: ${AI_SERVICE_URL:http://ai-service.tal.com/openai-compatible/v1/chat/completions}
-    api-key: ${AI_API_KEY:300000775:568f52f31bf0782018145f7dc56c3afb}
-    model-name: ${AI_MODEL_NAME:gpt-5.1}
-    connect-timeout: 10000
-    read-timeout: 300000
-    fallback-enabled: true
-
 

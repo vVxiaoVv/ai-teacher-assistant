@@ -1,6 +1,5 @@
 package com.moke.assistant.controller;
 
-import com.moke.assistant.dto.LessonPlanDto;
 import com.moke.assistant.dto.PageResultDto;
 import com.moke.assistant.entity.LessonPlan;
 import com.moke.assistant.service.FileParseService;
@@ -37,68 +36,48 @@ public class LessonPlanController {
     /**
      * 上传教案
      *
-     * @param title       教案标题
-     * @param content     教案文件
-     * @param classroomId 关联课堂ID（可选）
-     * @return 保存的教案实体
-     */
+     * @param title   教案标题
+     * @param title   教案标题
+     * @param content 教案文件
     @PostMapping("/upload")
     public ResponseEntity<LessonPlan> uploadLessonPlan(
             @RequestParam("title") String title,
-            @RequestParam("content") MultipartFile content,
-            @RequestParam(value = "classroomId", required = false) Long classroomId) {
-
-        logger.info("上传教案请求: title={}, classroomId={}", title, classroomId);
-
-        // 验证参数
-        if (title == null || title.trim().isEmpty()) {
-            logger.warn("上传教案失败: 标题为空");
+            @RequestParam("content") MultipartFile content) {
+            @RequestParam("content") MultipartFile content) {
+            @RequestParam("content") MultipartFile content) {
+            return ResponseEntity.badRequest().body(null);
             return ResponseEntity.badRequest().body(null);
         }
 
-        if (content == null || content.isEmpty()) {
-            logger.warn("上传教案失败: 文件为空");
             return ResponseEntity.badRequest().body(null);
-        }
+            if (!fileParseService.isSupported(content.getOriginalFilename())) {
+                logger.warn("不支持的文件类型: {}", content.getOriginalFilename());
+                return ResponseEntity.badRequest().body(null);
+            // 检查文件类型是否支持
+            }
 
-        // 检查文件类型是否支持
-        String filename = content.getOriginalFilename();
-        if (!fileParseService.isSupported(filename)) {
-            logger.warn("不支持的文件类型: {}", filename);
-            return ResponseEntity.badRequest().body(null);
-        }
-
-        try {
-            // 解析文件内容为String
+                return ResponseEntity.badRequest().body(null);
             String contentString = fileParseService.parseFileToString(content);
-
+            
+            // 解析文件内容为String
             if (contentString == null || contentString.trim().isEmpty()) {
                 logger.warn("解析后的文件内容为空");
                 return ResponseEntity.badRequest().body(null);
             }
-
-            // 保存教案
-            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(
-                    title.trim(),
-                    contentString.trim(),
-                    classroomId
-            );
-
+                return ResponseEntity.badRequest().body(null);
+            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(title.trim(), contentString.trim());
             logger.info("教案上传成功，ID: {}, 标题: {}", savedLessonPlan.getId(), savedLessonPlan.getTitle());
-            return ResponseEntity.ok(savedLessonPlan);
-
-        } catch (IOException e) {
-            logger.error("解析文件失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(null);
-        } catch (Exception e) {
+            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(title.trim(), contentString.trim());
             logger.error("上传教案失败: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(null);
+            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(title.trim(), contentString.trim());
+            logger.info("教案上传成功，ID: {}, 标题: {}", savedLessonPlan.getId(), savedLessonPlan.getTitle());
+            return ResponseEntity.badRequest().body(null);
         }
     }
-
+            return ResponseEntity.internalServerError().body(null);
     /**
      * 根据ID查询教案详情
-     *
+            return ResponseEntity.internalServerError().body(null);
      * @param id 教案ID
      * @return 教案实体
      */
@@ -135,6 +114,7 @@ public class LessonPlanController {
 
         Pageable pageable = PageRequest.of(page, size);
         PageResultDto<LessonPlanDto> result = lessonPlanService.getLessonPlanList(
+        // 确保页码和每页大小的有效性
                 title, startTime, endTime, pageable);
 
         return ResponseEntity.ok(result);
