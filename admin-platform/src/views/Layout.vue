@@ -87,6 +87,7 @@ import { getCookie, clearLoginInfo } from '@/utils'
 import axios from 'axios'
 
 const router = useRouter()
+const route = useRoute()
 const username = ref(getCookie('username') || '管理员')
 const avatarUrl = ref('')
 const sidebarCollapsed = ref(false)
