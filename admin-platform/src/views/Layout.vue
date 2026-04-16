@@ -1,6 +1,5 @@
 <template>
   <div class="layout-container">
-    <!-- 顶部导航栏 -->
     <header class="navbar">
       <div class="navbar-left">
         <el-button
@@ -37,7 +36,6 @@
     </header>
 
     <div class="layout-body">
-      <!-- 左侧边栏 -->
       <aside class="sidebar" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
         <el-menu
           :default-active="activeMenu"
@@ -53,34 +51,43 @@
             <template #title>首页</template>
           </el-menu-item>
           
+          <el-menu-item index="/classroom">
+            <el-icon><School /></el-icon>
+            <template #title>课堂管理</template>
+          </el-menu-item>
+          
           <el-menu-item index="/student-portrait">
             <el-icon><User /></el-icon>
             <template #title>学生画像管理</template>
           </el-menu-item>
           
-          <el-menu-item index="/lesson-plan">
-            <el-icon><Document /></el-icon>
-            <template #title>教案管理</template>
-          </el-menu-item>
+          <el-sub-menu index="lesson-plan-menu">
+            <template #title>
+              <el-icon><Document /></el-icon>
+              <span>教案管理</span>
+            </template>
+            <el-menu-item index="/lesson-plan">
+              <el-icon><List /></el-icon>
+              <template #title>教案列表</template>
+            </el-menu-item>
+            <el-menu-item index="/lesson-plan/upload">
+              <el-icon><Upload /></el-icon>
+              <template #title>上传教案</template>
+            </el-menu-item>
+          </el-sub-menu>
           
           <el-menu-item index="/video-examples">
             <el-icon><VideoCamera /></el-icon>
             <template #title>视频范例管理</template>
           </el-menu-item>
           
-          <el-menu-item index="/video-correction-history">
-            <el-icon><Clock /></el-icon>
-            <template #title>纠偏历史</template>
-          </el-menu-item>
-          
           <el-menu-item index="/teacher-portrait">
-            <el-icon><UserFilled /></el-icon>
+            <el-icon><Avatar /></el-icon>
             <template #title>教师画像</template>
           </el-menu-item>
         </el-menu>
       </aside>
 
-      <!-- 主内容区 -->
       <main class="main-content" :class="{ 'main-content-expanded': sidebarCollapsed }">
         <router-view />
       </main>
@@ -92,17 +99,21 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowDown, SwitchButton, Fold, Expand, HomeFilled, User, Document, VideoCamera, Clock, UserFilled } from '@element-plus/icons-vue'
+import { 
+  ArrowDown, SwitchButton, Fold, Expand, 
+  HomeFilled, User, Document, VideoCamera, 
+  UserFilled, School, Upload, List, Avatar 
+} from '@element-plus/icons-vue'
 import { getCookie, clearLoginInfo } from '@/utils'
 import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
+
 const username = ref(getCookie('username') || '管理员')
 const avatarUrl = ref('')
 const sidebarCollapsed = ref(false)
 
-// 获取默认头像URL
 const getDefaultAvatar = () => {
   if (username.value) {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(username.value)}&size=200&background=5B8DEF&color=fff`
@@ -110,13 +121,10 @@ const getDefaultAvatar = () => {
   return ''
 }
 
-// 处理头像加载失败
 const handleAvatarError = () => {
-  // 如果头像加载失败，使用默认头像
   avatarUrl.value = getDefaultAvatar()
 }
 
-// 获取用户信息（包括头像）
 const fetchUserInfo = async () => {
   try {
     const response = await axios.get('/api/user/info', {
@@ -126,19 +134,16 @@ const fetchUserInfo = async () => {
     if (response.data && response.data.code === 0 && response.data.data) {
       const userInfo = response.data.data
       username.value = userInfo.username || username.value
-      // 如果数据库中有头像URL，使用数据库的；否则使用默认头像
       if (userInfo.avatarUrl && userInfo.avatarUrl.trim()) {
         avatarUrl.value = userInfo.avatarUrl.trim()
       } else {
         avatarUrl.value = getDefaultAvatar()
       }
     } else {
-      // 如果获取失败，使用默认头像
       avatarUrl.value = getDefaultAvatar()
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
-    // 如果获取失败，使用默认头像
     avatarUrl.value = getDefaultAvatar()
   }
 }
@@ -148,7 +153,11 @@ onMounted(() => {
 })
 
 const activeMenu = computed(() => {
-  return route.path
+  const path = route.path
+  if (path === '/lesson-plan' || path === '/lesson-plan/upload') {
+    return path
+  }
+  return path
 })
 
 const toggleSidebar = () => {
@@ -167,7 +176,6 @@ const handleLogout = async () => {
     ElMessage.success('退出成功')
     router.push('/login')
   } catch (error) {
-    // 用户取消操作
   }
 }
 </script>
@@ -345,4 +353,3 @@ const handleLogout = async () => {
   }
 }
 </style>
-

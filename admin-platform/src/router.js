@@ -27,6 +27,11 @@ const routes = [
         component: Dashboard
       },
       {
+        path: 'classroom',
+        name: 'ClassroomList',
+        component: () => import('./views/ClassroomList.vue')
+      },
+      {
         path: 'student-portrait',
         name: 'StudentPortrait',
         component: StudentPortraitList
@@ -38,7 +43,8 @@ const routes = [
       },
       {
         path: 'lesson-plan',
-        redirect: '/lesson-plan/list'
+        name: 'LessonPlanList',
+        component: () => import('./views/LessonPlanList.vue')
       },
       {
         path: 'lesson-plan/upload',
@@ -46,19 +52,14 @@ const routes = [
         component: () => import('./views/LessonPlanUpload.vue')
       },
       {
-        path: 'lesson-plan/list',
-        name: 'LessonPlanList',
-        component: () => import('./views/LessonPlanList.vue')
+        path: 'script/:id',
+        name: 'ScriptDetail',
+        component: () => import('./views/ScriptDetail.vue')
       },
       {
         path: 'video-examples',
         name: 'VideoExamples',
         component: () => import('./views/VideoExamples.vue')
-      },
-      {
-        path: 'video-correction-history',
-        name: 'VideoCorrectionHistory',
-        component: () => import('./views/VideoCorrectionHistory.vue')
       },
       {
         path: 'teacher-portrait',
@@ -69,11 +70,6 @@ const routes = [
         path: 'teacher-portrait/detail',
         name: 'TeacherPortraitDetail',
         component: () => import('./views/TeacherPortrait.vue')
-      },
-      {
-        path: 'script/:id',
-        name: 'ScriptDetail',
-        component: () => import('./views/ScriptDetail.vue')
       }
     ]
   },
@@ -85,23 +81,18 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫，验证登录状态
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    // 检查是否有token、userId或username（从Cookie中获取）
     const token = getCookie('token')
     const userId = getCookie('userId')
     const username = getCookie('username')
     
     if (!token && !userId && !username) {
-      // 没有认证信息，重定向到登录页
       next({ path: '/login' })
     } else {
-      // 有认证信息，继续访问
       next()
     }
   } else {
-    // 不需要认证的页面，直接访问
     next()
   }
 })

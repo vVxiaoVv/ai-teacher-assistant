@@ -97,9 +97,6 @@ const rules = {
   title: [
     { required: true, message: '请输入教案标题', trigger: 'blur' },
     { min: 1, max: 200, message: '标题长度在 1 到 200 个字符', trigger: 'blur' }
-  ],
-  classroomId: [
-    { required: true, message: '请选择关联课堂', trigger: 'change' }
   ]
 }
 
@@ -130,7 +127,7 @@ const loadClassrooms = async () => {
 
 // 跳转到创建课堂页面
 const goToCreateClassroom = () => {
-  router.push('/classroom/add')
+  router.push('/classroom')
 }
 
 onMounted(() => {
@@ -172,18 +169,14 @@ const handleSubmit = async () => {
         return
       }
       
-      // 检查是否选择了课堂
-      if (!form.classroomId) {
-        ElMessage.warning('请选择关联课堂')
-        return
-      }
-      
       submitting.value = true
       try {
         const formData = new FormData()
         formData.append('title', form.title.trim())
         formData.append('content', selectedFile.value)
-        formData.append('classroomId', form.classroomId)
+        if (form.classroomId) {
+          formData.append('classroomId', form.classroomId)
+        }
         
         const response = await axios.post('/api/lesson-plan/upload', formData, {
           headers: {
@@ -209,7 +202,7 @@ const handleSubmit = async () => {
           }
           
           // 跳转到教案列表页
-          router.push('/lesson-plan/list')
+          router.push('/lesson-plan')
         }
       } catch (error) {
         console.error('上传失败:', error)

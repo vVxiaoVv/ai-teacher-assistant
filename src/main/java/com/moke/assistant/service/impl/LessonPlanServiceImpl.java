@@ -1,5 +1,6 @@
 package com.moke.assistant.service.impl;
 
+import com.moke.assistant.common.utils.UserContext;
 import com.moke.assistant.dto.LessonPlanDto;
 import com.moke.assistant.dto.PageResultDto;
 import com.moke.assistant.entity.LessonPlan;
@@ -28,10 +29,17 @@ public class LessonPlanServiceImpl implements LessonPlanService {
     }
 
     @Override
-    public LessonPlan uploadLessonPlan(String title, String content) {
+    public LessonPlan uploadLessonPlan(String title, String content, Long classroomId) {
         LessonPlan lessonPlan = new LessonPlan();
         lessonPlan.setTitle(title);
         lessonPlan.setContent(content);
+        lessonPlan.setClassroomId(classroomId);
+        
+        Long userId = UserContext.getUserId();
+        if (userId != null) {
+            lessonPlan.setCreateUserId(userId);
+        }
+        
         return lessonPlanRepository.save(lessonPlan);
     }
 

@@ -37,44 +37,56 @@ public class LessonPlanController {
     /**
      * 上传教案
      *
-     * @param title   教案标题
-     * @param content 教案文件
+     * @param title       教案标题
+     * @param content     教案文件
+     * @param classroomId 关联课堂ID（可选）
      * @return 保存的教案实体
      */
     @PostMapping("/upload")
     public ResponseEntity<LessonPlan> uploadLessonPlan(
             @RequestParam("title") String title,
-            @RequestParam("content") MultipartFile content) {
+            @RequestParam("content") MultipartFile content,
+            @RequestParam(value = "classroomId", required = false) Long classroomId) {
 
+        logger.info("上传教案请求: title={}, classroomId={}", title, classroomId);
+
+        // 验证参数
         if (title == null || title.trim().isEmpty()) {
+            logger.warn("上传教案失败: 标题为空");
             return ResponseEntity.badRequest().body(null);
         }
 
         if (content == null || content.isEmpty()) {
+            logger.warn("上传教案失败: 文件为空");
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        // 检查文件类型是否支持
+        String filename = content.getOriginalFilename();
+        if (!fileParseService.isSupported(filename)) {
+            logger.warn("不支持的文件类型: {}", filename);
             return ResponseEntity.badRequest().body(null);
         }
 
         try {
-            // 检查文件类型是否支持
-            if (!fileParseService.isSupported(content.getOriginalFilename())) {
-                logger.warn("不支持的文件类型: {}", content.getOriginalFilename());
-                return ResponseEntity.badRequest().body(null);
-            }
-
             // 解析文件内容为String
             String contentString = fileParseService.parseFileToString(content);
-            
+
             if (contentString == null || contentString.trim().isEmpty()) {
                 logger.warn("解析后的文件内容为空");
                 return ResponseEntity.badRequest().body(null);
             }
 
-            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(title.trim(), contentString.trim());
+            // 保存教案
+            LessonPlan savedLessonPlan = lessonPlanService.uploadLessonPlan(
+                    title.trim(),
+                    contentString.trim(),
+                    classroomId
+            );
+
             logger.info("教案上传成功，ID: {}, 标题: {}", savedLessonPlan.getId(), savedLessonPlan.getTitle());
             return ResponseEntity.ok(savedLessonPlan);
-        } catch (IllegalArgumentException e) {
-            logger.error("上传教案参数错误: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
+
         } catch (IOException e) {
             logger.error("解析文件失败: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(null);
