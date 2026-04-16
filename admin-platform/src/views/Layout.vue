@@ -87,12 +87,10 @@ import { getCookie, clearLoginInfo } from '@/utils'
 import axios from 'axios'
 
 const router = useRouter()
-import { ArrowDown, SwitchButton, Fold, Expand, HomeFilled, User, Document, VideoCamera, Clock, UserFilled } from '@element-plus/icons-vue'
 const username = ref(getCookie('username') || '管理员')
 const avatarUrl = ref('')
 const sidebarCollapsed = ref(false)
 
-import { ArrowDown, SwitchButton, Fold, Expand, HomeFilled, User, Document, VideoCamera, Clock, UserFilled } from '@element-plus/icons-vue'
 const getDefaultAvatar = () => {
   if (username.value) {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(username.value)}&size=200&background=5B8DEF&color=fff`
