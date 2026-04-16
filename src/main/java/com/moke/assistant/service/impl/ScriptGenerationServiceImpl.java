@@ -18,19 +18,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * 逐字稿生成服务实现类
- */
 @Service
 public class ScriptGenerationServiceImpl implements ScriptGenerationService {
 
@@ -50,10 +49,9 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
                                       StudentPortraitRepository studentPortraitRepository,
                                       ScriptRepository scriptRepository,
                                       ClassroomStudentRepository classroomStudentRepository) {
-        // 配置 RestTemplate 超时时间
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(10000); // 连接超时：10秒
-        factory.setReadTimeout(300000); // 读取超时：5分钟（AI生成可能需要较长时间）
+        factory.setConnectTimeout(10000);
+        factory.setReadTimeout(300000);
         this.restTemplate = new RestTemplate(factory);
         this.lessonPlanRepository = lessonPlanRepository;
         this.studentPortraitRepository = studentPortraitRepository;
@@ -66,7 +64,6 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
         try {
             logger.info("开始生成逐字稿，教案ID: {}", lessonPlanId);
 
-            // 1. 读取教案内容
             Optional<LessonPlan> lessonPlanOpt = lessonPlanRepository.findById(lessonPlanId);
             if (!lessonPlanOpt.isPresent()) {
                 throw new ServiceException("教案不存在，ID: " + lessonPlanId);
@@ -78,13 +75,11 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
             }
             String lessonTitle = lessonPlan.getTitle();
 
-            // 2. 读取关联课堂的学生画像信息
             List<StudentPortrait> students = new ArrayList<>();
             if (lessonPlan.getClassroomId() != null) {
                 List<ClassroomStudent> classroomStudents = classroomStudentRepository.findByClassroomId(lessonPlan.getClassroomId());
                 List<Long> studentIds = new ArrayList<>();
                 for (ClassroomStudent cs : classroomStudents) {
-                    // 使用 student 关联对象获取ID（LAZY加载，需要确保在事务中）
                     if (cs.getStudent() != null) {
                         studentIds.add(cs.getStudent().getId());
                     }
@@ -92,32 +87,31 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
                 if (!studentIds.isEmpty()) {
                     students = studentPortraitRepository.findAllById(studentIds);
                     logger.info("读取到关联课堂的学生信息数量: {}", students.size());
-                } else {
-                    logger.warn("关联课堂中没有学生信息");
                 }
-            } else {
-                logger.warn("教案未关联课堂，无法获取学生信息");
             }
 
-            // 3. 构建AI Prompt
             String prompt = buildPrompt(lessonContent, students);
+            
+            String scriptContent;
+            try {
+                scriptContent = callAIService(prompt);
+                logger.info("AI服务调用成功，逐字稿长度: {}", scriptContent.length());
+            } catch (Exception e) {
+                logger.warn("AI服务调用失败，使用备用方案生成逐字稿。错误: {}", e.getMessage());
+                scriptContent = generateFallbackScript(lessonTitle, lessonContent, students);
+                logger.info("备用方案生成逐字稿成功，长度: {}", scriptContent.length());
+            }
 
-            // 4. 调用AI服务生成逐字稿
-            String scriptContent = callAIService(prompt);
-            logger.info("AI服务调用成功，逐字稿长度: {}", scriptContent.length());
-
-            // 5. 保存到数据库
             Script script = new Script();
             script.setLessonPlanId(lessonPlanId);
             script.setTitle(lessonTitle + " - 逐字稿");
             script.setContent(scriptContent);
-            // UserContext.getUserId()可能为null，允许为空
+            
             Long userId = UserContext.getUserId();
             if (userId != null) {
                 script.setCreateUserId(userId);
             }
 
-            // 如果已存在逐字稿，则更新；否则创建新的
             Optional<Script> existingScript = scriptRepository.findByLessonPlanId(lessonPlanId);
             if (existingScript.isPresent()) {
                 Script existing = existingScript.get();
@@ -152,9 +146,6 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
         return scriptOpt.orElse(null);
     }
 
-    /**
-     * 构建AI Prompt
-     */
     private String buildPrompt(String lessonContent, List<StudentPortrait> students) {
         StringBuilder promptBuilder = new StringBuilder();
         
@@ -190,9 +181,6 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
         return promptBuilder.toString();
     }
 
-    /**
-     * 调用AI服务
-     */
     private String callAIService(String prompt) {
         try {
             logger.info("开始调用AI服务，Prompt长度: {}", prompt.length());
@@ -235,7 +223,6 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
 
             ScriptGenerationResponse responseBody = response.getBody();
             
-            // 详细记录响应内容用于调试
             if (responseBody == null) {
                 logger.error("AI服务返回的响应体为null");
                 throw new ServiceException("AI服务返回空响应体");
@@ -276,6 +263,12 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
             }
         } catch (ServiceException e) {
             throw e;
+        } catch (HttpClientErrorException e) {
+            logger.error("AI服务返回客户端错误: {}, 状态码: {}", e.getMessage(), e.getStatusCode());
+            if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                throw new ServiceException("AI服务配额已用完: 429 Too Many Requests", e);
+            }
+            throw new ServiceException("AI服务调用失败: " + e.getStatusCode() + " - " + e.getStatusText(), e);
         } catch (org.springframework.web.client.ResourceAccessException e) {
             logger.error("调用AI服务超时或连接失败", e);
             throw new ServiceException("调用AI服务超时或连接失败: " + e.getMessage(), e);
@@ -285,15 +278,86 @@ public class ScriptGenerationServiceImpl implements ScriptGenerationService {
         }
     }
 
-    /**
-     * 格式化内容
-     */
+    private String generateFallbackScript(String lessonTitle, String lessonContent, List<StudentPortrait> students) {
+        StringBuilder scriptBuilder = new StringBuilder();
+        
+        scriptBuilder.append("【备注：当前使用备用方案生成逐字稿（AI服务配额已用完或不可用）】\n\n");
+        scriptBuilder.append("课程标题：").append(lessonTitle).append("\n\n");
+        
+        String[] defaultStudents = {"小明", "小红", "小华", "小丽"};
+        List<String> studentNames = new ArrayList<>();
+        
+        if (students != null && !students.isEmpty()) {
+            for (StudentPortrait s : students) {
+                studentNames.add(s.getStudentName());
+            }
+        } else {
+            for (String s : defaultStudents) {
+                studentNames.add(s);
+            }
+        }
+
+        scriptBuilder.append("【课堂导入】\n");
+        scriptBuilder.append("老师：同学们好！今天我们来学习").append(lessonTitle).append("。在开始之前，我想先问大家一个问题...\n\n");
+        
+        if (!studentNames.isEmpty()) {
+            String firstStudent = studentNames.get(0);
+            scriptBuilder.append(firstStudent).append("：老师，我想我有一些想法...\n");
+            scriptBuilder.append("老师：很好！").append(firstStudent).append("同学的回答很有思考价值。请坐。\n\n");
+        }
+
+        scriptBuilder.append("【新知讲授】\n");
+        scriptBuilder.append("老师：接下来让我们一起深入学习今天的内容。\n");
+        scriptBuilder.append("（老师开始详细讲解课程内容）\n\n");
+        
+        if (studentNames.size() > 1) {
+            String secondStudent = studentNames.get(1);
+            scriptBuilder.append("老师：").append(secondStudent).append("，你能回答一下这个问题吗？\n");
+            scriptBuilder.append(secondStudent).append("：嗯...让我想想...\n");
+            scriptBuilder.append("老师：没关系，大胆说出来！\n");
+            scriptBuilder.append(secondStudent).append("：我认为...\n");
+            scriptBuilder.append("老师：非常好！你的思路是正确的。\n\n");
+        }
+
+        scriptBuilder.append("【课堂练习】\n");
+        scriptBuilder.append("老师：现在让我们做一些练习来巩固今天所学的知识。\n\n");
+        
+        if (studentNames.size() > 2) {
+            String thirdStudent = studentNames.get(2);
+            scriptBuilder.append("老师：").append(thirdStudent).append("，请你来回答这道题。\n");
+            scriptBuilder.append(thirdStudent).append("：老师，这道题应该这样做...\n");
+            scriptBuilder.append("老师：太棒了！回答完全正确。\n\n");
+        }
+
+        scriptBuilder.append("【课堂小结】\n");
+        scriptBuilder.append("老师：今天我们学习了什么？谁来总结一下？\n\n");
+        
+        if (studentNames.size() > 3) {
+            String fourthStudent = studentNames.get(3);
+            scriptBuilder.append(fourthStudent).append("：老师，今天我们学习了...\n");
+            scriptBuilder.append("老师：总结得很好！今天的课程就到这里，同学们再见！\n\n");
+        } else {
+            scriptBuilder.append("（同学们齐声回答）\n");
+            scriptBuilder.append("老师：很好！今天的课程就到这里，同学们再见！\n\n");
+        }
+
+        scriptBuilder.append("【教案原文参考】\n");
+        scriptBuilder.append("------------------------------------------------------------\n");
+        
+        if (lessonContent != null && lessonContent.length() > 1000) {
+            scriptBuilder.append(lessonContent.substring(0, 1000)).append("\n...（内容较长，已截断）...\n");
+        } else {
+            scriptBuilder.append(lessonContent != null ? lessonContent : "无内容");
+        }
+        scriptBuilder.append("\n------------------------------------------------------------\n");
+
+        return scriptBuilder.toString();
+    }
+
     private String formatContent(String content) {
         if (content == null || content.trim().isEmpty()) {
             return "";
         }
-        // 处理换行符，确保格式正确
         return content.trim();
     }
 }
-
