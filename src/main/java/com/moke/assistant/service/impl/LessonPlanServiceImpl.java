@@ -22,6 +22,7 @@ public class LessonPlanServiceImpl implements LessonPlanService {
 
     private final LessonPlanRepository lessonPlanRepository;
 
+
     @Autowired
     public LessonPlanServiceImpl(LessonPlanRepository lessonPlanRepository) {
         this.lessonPlanRepository = lessonPlanRepository;
