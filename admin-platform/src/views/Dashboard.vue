@@ -15,7 +15,7 @@
         </div>
       </el-card>
 
-      <el-card class="stat-card" shadow="hover" @click="navigateTo('lesson-plan/list')">
+      <el-card class="stat-card" shadow="hover" @click="navigateTo('lesson-plan')">
         <div class="stat-content">
           <div class="stat-icon lesson-icon">
             <el-icon><Document /></el-icon>

@@ -100,6 +100,8 @@ public class TeacherPortraitServiceImpl implements TeacherPortraitService {
             response.setUserId(userId);
             response.setUsername(user.getUsername());
             response.setAvatarUrl(user.getAvatarUrl());
+            response.setAge(user.getAge());
+            response.setSubject(user.getSubject());
             response.setHistoryCount(records.size());
             
             // 生成打分规则说明
@@ -717,6 +719,8 @@ public class TeacherPortraitServiceImpl implements TeacherPortraitService {
             response.setUserId(userId);
             response.setUsername(user.getUsername());
             response.setAvatarUrl(user.getAvatarUrl());
+            response.setAge(user.getAge());
+            response.setSubject(user.getSubject());
             response.setDescription(portrait.getDescription());
             response.setScoringRule(portrait.getScoringRule());
             response.setHistoryCount(portrait.getHistoryCount());
@@ -786,6 +790,8 @@ public class TeacherPortraitServiceImpl implements TeacherPortraitService {
                 response.setUserId(userId);
                 response.setUsername(user.getUsername());
                 response.setAvatarUrl(user.getAvatarUrl());
+                response.setAge(user.getAge());
+                response.setSubject(user.getSubject());
                 
                 // 如果有画像数据，则填充画像信息
                 if (portrait != null) {

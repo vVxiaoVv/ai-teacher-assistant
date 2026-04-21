@@ -53,6 +53,18 @@ public class User {
     private String avatarUrl;
 
     /**
+     * 年龄
+     */
+    @Column(name = "age")
+    private Integer age;
+
+    /**
+     * 学科（如：语文、数学、英语等）
+     */
+    @Column(name = "subject", length = 50)
+    private String subject;
+
+    /**
      * 创建时间
      */
     @CreationTimestamp

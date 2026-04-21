@@ -3,6 +3,7 @@ package com.moke.assistant.service;
 import com.moke.assistant.dto.LoginRequest;
 import com.moke.assistant.dto.LoginResponse;
 import com.moke.assistant.dto.RegisterRequest;
+import com.moke.assistant.dto.UpdateUserInfoRequest;
 import com.moke.assistant.entity.User;
 
 /**
@@ -45,4 +46,12 @@ public interface UserService {
      * @return 用户实体
      */
     User findById(Long id);
+
+    /**
+     * 更新用户信息
+     * @param userId 用户ID
+     * @param request 更新请求
+     * @return 更新后的用户实体
+     */
+    User updateUserInfo(Long userId, UpdateUserInfoRequest request);
 }

@@ -42,6 +42,16 @@ public class TeacherPortraitResponse {
      * 用户头像URL
      */
     private String avatarUrl;
+
+    /**
+     * 年龄
+     */
+    private Integer age;
+
+    /**
+     * 学科
+     */
+    private String subject;
 }
 
 

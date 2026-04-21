@@ -18,20 +18,35 @@
             :key="portrait.userId"
             class="portrait-card"
             shadow="hover"
-            @click="handleCardClick(portrait)"
           >
             <div class="card-header-section">
               <el-avatar
                 :src="getAvatarUrl(portrait)"
-                :size="48"
+                :size="64"
                 @error="handleAvatarError"
                 class="card-avatar"
+                shape="square"
               >
                 <el-icon><User /></el-icon>
               </el-avatar>
               <div class="card-title-section">
                 <h3 class="card-title">{{ portrait.username }}</h3>
-                <p class="card-subtitle">已使用 {{ portrait.historyCount || 0 }} 条历史记录</p>
+                <p class="card-subtitle">
+                  <span v-if="portrait.age">年龄：{{ portrait.age }}岁</span>
+                  <span v-if="portrait.age && portrait.subject" class="separator">|</span>
+                  <span v-if="portrait.subject">学科：{{ portrait.subject }}</span>
+                </p>
+              </div>
+              <div class="card-actions">
+                <el-tooltip content="编辑教师信息" placement="top">
+                  <el-button
+                    type="primary"
+                    :icon="Edit"
+                    circle
+                    size="small"
+                    @click="handleEditTeacher(portrait)"
+                  />
+                </el-tooltip>
               </div>
             </div>
             
@@ -99,13 +114,114 @@
         @close="detailDialogVisible = false"
       />
     </el-dialog>
+
+    <!-- 编辑教师信息对话框 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      title="编辑教师信息"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="editForm" :rules="editRules" ref="editFormRef" label-width="80px">
+        <el-form-item label="姓名" prop="username">
+          <el-input
+            v-model="editForm.username"
+            placeholder="请输入姓名"
+            maxlength="50"
+            show-word-limit
+          />
+        </el-form-item>
+
+        <el-form-item label="年龄" prop="age">
+          <el-input-number
+            v-model="editForm.age"
+            :min="1"
+            :max="120"
+            placeholder="请输入年龄"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <el-form-item label="学科" prop="subject">
+          <el-select
+            v-model="editForm.subject"
+            placeholder="请选择学科"
+            clearable
+            style="width: 100%"
+          >
+            <el-option label="语文" value="语文" />
+            <el-option label="数学" value="数学" />
+            <el-option label="英语" value="英语" />
+            <el-option label="物理" value="物理" />
+            <el-option label="化学" value="化学" />
+            <el-option label="生物" value="生物" />
+            <el-option label="历史" value="历史" />
+            <el-option label="地理" value="地理" />
+            <el-option label="政治" value="政治" />
+            <el-option label="体育" value="体育" />
+            <el-option label="音乐" value="音乐" />
+            <el-option label="美术" value="美术" />
+            <el-option label="医学" value="医学" />
+            <el-option label="文学" value="文学" />
+            <el-option label="信息技术" value="信息技术" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="头像">
+          <div class="avatar-url-section">
+            <el-input
+              v-model="editForm.avatarUrl"
+              placeholder="请输入图片URL（支持 http:// 或 https:// 开头的完整URL）"
+              maxlength="500"
+              show-word-limit
+              clearable
+              @input="handleEditUrlInput"
+            >
+              <template #append>
+                <el-button @click="handleEditPreviewAvatar" :disabled="!editForm.avatarUrl">预览</el-button>
+              </template>
+            </el-input>
+            <div v-if="editForm.avatarUrl" class="avatar-preview-section">
+              <div class="avatar-preview-wrapper">
+                <img 
+                  :src="getFullAvatarUrl(editForm.avatarUrl)" 
+                  class="avatar-preview" 
+                  @error="handleEditPreviewError"
+                  alt="头像预览"
+                />
+                <div v-if="editPreviewError" class="preview-error">
+                  <el-icon><Picture /></el-icon>
+                  <p>图片加载失败</p>
+                </div>
+              </div>
+              <el-button
+                type="danger"
+                link
+                size="small"
+                @click="handleEditRemoveAvatar"
+              >
+                清除URL
+              </el-button>
+            </div>
+            <div class="avatar-tips">
+              <p>请输入完整的图片URL地址，例如：https://example.com/image.jpg</p>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <el-button @click="handleEditClose">取消</el-button>
+        <el-button type="primary" @click="handleEditSubmit" :loading="editSubmitting">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { User } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { User, Edit, Picture } from '@element-plus/icons-vue'
 import axios from 'axios'
 import TeacherPortraitDetail from './TeacherPortraitDetail.vue'
 
@@ -115,6 +231,28 @@ const portraitList = ref([])
 const detailDialogVisible = ref(false)
 const selectedPortrait = ref(null)
 const generatingPortrait = ref({}) // 记录正在生成画像的用户ID
+
+// 编辑教师信息相关
+const editDialogVisible = ref(false)
+const editFormRef = ref(null)
+const editSubmitting = ref(false)
+const editPreviewError = ref(false)
+const editingTeacher = ref(null)
+
+const editForm = ref({
+  userId: null,
+  username: '',
+  age: null,
+  subject: '',
+  avatarUrl: ''
+})
+
+const editRules = {
+  username: [
+    { required: true, message: '请输入姓名', trigger: 'blur' },
+    { max: 50, message: '姓名长度不能超过50个字符', trigger: 'blur' }
+  ]
+}
 
 // 加载画像列表
 const loadPortraitList = async () => {
@@ -140,10 +278,19 @@ const loadPortraitList = async () => {
   }
 }
 
+// 获取完整头像URL
+const getFullAvatarUrl = (avatarUrl) => {
+  if (!avatarUrl) return ''
+  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+    return avatarUrl
+  }
+  return avatarUrl
+}
+
 // 获取头像URL
 const getAvatarUrl = (portrait) => {
   if (portrait.avatarUrl) {
-    return portrait.avatarUrl
+    return getFullAvatarUrl(portrait.avatarUrl)
   } else if (portrait.username) {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(portrait.username)}&size=200`
   }
@@ -171,11 +318,6 @@ const calculateAverageScore = (hexagramScore) => {
   
   const average = values.reduce((sum, val) => sum + val, 0) / values.length
   return average.toFixed(1)
-}
-
-// 点击卡片
-const handleCardClick = (portrait) => {
-  handleViewDetail(portrait)
 }
 
 // 查看详情
@@ -278,6 +420,110 @@ const handleRegeneratePortrait = async (portrait) => {
   }
 }
 
+// 编辑教师信息
+const handleEditTeacher = (portrait) => {
+  editingTeacher.value = portrait
+  editForm.value = {
+    userId: portrait.userId,
+    username: portrait.username || '',
+    age: portrait.age || null,
+    subject: portrait.subject || '',
+    avatarUrl: portrait.avatarUrl || ''
+  }
+  editPreviewError.value = false
+  editDialogVisible.value = true
+}
+
+// URL输入时重置预览错误状态
+const handleEditUrlInput = () => {
+  editPreviewError.value = false
+}
+
+// 预览头像
+const handleEditPreviewAvatar = () => {
+  if (!editForm.value.avatarUrl) {
+    ElMessage.warning('请输入图片URL')
+    return
+  }
+  editPreviewError.value = false
+  // 预览功能通过图片加载自动触发，这里只是重置错误状态
+}
+
+// 预览图片加载失败
+const handleEditPreviewError = () => {
+  editPreviewError.value = true
+}
+
+// 清除头像URL
+const handleEditRemoveAvatar = () => {
+  editForm.value.avatarUrl = ''
+  editPreviewError.value = false
+  ElMessage.success('已清除头像URL')
+}
+
+// 提交编辑
+const handleEditSubmit = async () => {
+  if (!editFormRef.value) return
+  
+  await editFormRef.value.validate(async (valid) => {
+    if (valid) {
+      editSubmitting.value = true
+      try {
+        const requestData = {}
+        if (editForm.value.username) {
+          requestData.username = editForm.value.username.trim()
+        }
+        if (editForm.value.age) {
+          requestData.age = editForm.value.age
+        }
+        if (editForm.value.subject) {
+          requestData.subject = editForm.value.subject
+        }
+        if (editForm.value.avatarUrl) {
+          requestData.avatarUrl = editForm.value.avatarUrl
+        }
+        
+        const response = await axios.put(
+          `/api/user/info/${editForm.value.userId}`,
+          requestData,
+          {
+            withCredentials: true
+          }
+        )
+        
+        if (response.data && response.data.code === 0) {
+          ElMessage.success('更新成功')
+          handleEditClose()
+          // 重新加载列表
+          await loadPortraitList()
+        } else {
+          ElMessage.error(response.data?.msg || '更新失败')
+        }
+      } catch (error) {
+        console.error('更新教师信息失败:', error)
+        ElMessage.error(error.response?.data?.msg || error.message || '更新失败，请稍后重试')
+      } finally {
+        editSubmitting.value = false
+      }
+    }
+  })
+}
+
+// 关闭编辑对话框
+const handleEditClose = () => {
+  editDialogVisible.value = false
+  editFormRef.value?.resetFields()
+  editForm.value = {
+    userId: null,
+    username: '',
+    age: null,
+    subject: '',
+    avatarUrl: ''
+  }
+  editPreviewError.value = false
+  editingTeacher.value = null
+}
+
 // 组件挂载时加载列表
 onMounted(() => {
   loadPortraitList()
@@ -334,7 +580,6 @@ onMounted(() => {
   }
 
   .portrait-card {
-    cursor: pointer;
     transition: all 0.3s ease;
     border: 1px solid #E2E8F0;
     
@@ -351,11 +596,12 @@ onMounted(() => {
 
   .card-header-section {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     margin-bottom: 16px;
     padding-bottom: 16px;
     border-bottom: 1px solid #E2E8F0;
+    position: relative;
   }
 
   .card-avatar {
@@ -368,7 +614,7 @@ onMounted(() => {
     
     .card-title {
       margin: 0 0 4px 0;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: #1A202C;
       overflow: hidden;
@@ -378,9 +624,20 @@ onMounted(() => {
     
     .card-subtitle {
       margin: 0;
-      font-size: 12px;
+      font-size: 13px;
       color: #718096;
+      
+      .separator {
+        margin: 0 8px;
+        color: #CBD5E0;
+      }
     }
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .card-content {
@@ -439,6 +696,73 @@ onMounted(() => {
       overflow-y: auto;
     }
   }
+
+  // 头像URL输入样式
+  .avatar-url-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .avatar-preview-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .avatar-preview-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #F7FAFC;
+  }
+
+  .avatar-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .preview-error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #F7FAFC;
+    color: #909399;
+    
+    .el-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 12px;
+    }
+  }
+
+  .avatar-tips {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 4px;
+    
+    p {
+      margin: 0;
+    }
+  }
 }
 
 @media (max-width: 768px) {
@@ -447,4 +771,3 @@ onMounted(() => {
   }
 }
 </style>
-

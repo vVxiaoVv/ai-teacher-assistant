@@ -6,12 +6,15 @@ import com.moke.assistant.common.utils.UserContext;
 import com.moke.assistant.dto.LoginRequest;
 import com.moke.assistant.dto.LoginResponse;
 import com.moke.assistant.dto.RegisterRequest;
+import com.moke.assistant.dto.UpdateUserInfoRequest;
 import com.moke.assistant.dto.UserInfoDto;
 import com.moke.assistant.entity.User;
 import com.moke.assistant.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -118,12 +121,109 @@ public class UserController {
         }
         
         // 转换为DTO
+        UserInfoDto userInfo = convertToUserInfoDto(user);
+        
+        return R.ok().put("data", userInfo);
+    }
+    
+    /**
+     * 获取指定用户信息
+     */
+    @GetMapping("/info/{userId}")
+    public R getUserInfo(@PathVariable Long userId) {
+        User user = userService.findById(userId);
+        if (user == null) {
+            return R.error(404, "用户不存在");
+        }
+        
+        UserInfoDto userInfo = convertToUserInfoDto(user);
+        return R.ok().put("data", userInfo);
+    }
+    
+    /**
+     * 更新当前用户信息
+     */
+    @PutMapping("/info")
+    @SysLog("更新用户信息")
+    public R updateCurrentUserInfo(@RequestBody UpdateUserInfoRequest request, HttpServletRequest httpRequest) {
+        // 获取当前用户ID
+        Long userId = getCurrentUserId(httpRequest);
+        if (userId == null) {
+            return R.error(401, "未登录");
+        }
+        
+        try {
+            User updatedUser = userService.updateUserInfo(userId, request);
+            UserInfoDto userInfo = convertToUserInfoDto(updatedUser);
+            return R.ok().put("data", userInfo);
+        } catch (Exception e) {
+            return R.error(500, "更新用户信息失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 更新指定用户信息（管理员使用）
+     */
+    @PutMapping("/info/{userId}")
+    @SysLog("更新用户信息")
+    public R updateUserInfo(@PathVariable Long userId, @RequestBody UpdateUserInfoRequest request) {
+        try {
+            User updatedUser = userService.updateUserInfo(userId, request);
+            UserInfoDto userInfo = convertToUserInfoDto(updatedUser);
+            return R.ok().put("data", userInfo);
+        } catch (Exception e) {
+            return R.error(500, "更新用户信息失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 将User实体转换为UserInfoDto
+     */
+    private UserInfoDto convertToUserInfoDto(User user) {
         UserInfoDto userInfo = new UserInfoDto();
         userInfo.setId(user.getId());
         userInfo.setUsername(user.getUsername());
         userInfo.setRole(user.getRole());
         userInfo.setAvatarUrl(user.getAvatarUrl());
+        userInfo.setAge(user.getAge());
+        userInfo.setSubject(user.getSubject());
+        return userInfo;
+    }
+    
+    /**
+     * 获取当前用户ID
+     */
+    private Long getCurrentUserId(HttpServletRequest request) {
+        // 优先从UserContext获取
+        User user = UserContext.getUser();
+        if (user != null) {
+            return user.getId();
+        }
         
-        return R.ok().put("data", userInfo);
+        // 从Header获取
+        String userIdFromHeader = request.getHeader("X-User-Id");
+        if (userIdFromHeader != null && !userIdFromHeader.trim().isEmpty()) {
+            try {
+                return Long.parseLong(userIdFromHeader.trim());
+            } catch (NumberFormatException e) {
+                // 忽略
+            }
+        }
+        
+        // 从Cookie获取
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("userId".equals(cookie.getName())) {
+                    try {
+                        return Long.parseLong(cookie.getValue());
+                    } catch (NumberFormatException e) {
+                        // 忽略
+                    }
+                }
+            }
+        }
+        
+        return null;
     }
 }

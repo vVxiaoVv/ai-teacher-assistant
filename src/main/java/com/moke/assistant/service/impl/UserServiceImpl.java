@@ -1,17 +1,25 @@
 package com.moke.assistant.service.impl;
 
+import com.moke.assistant.common.exception.ServiceException;
 import com.moke.assistant.dto.LoginRequest;
 import com.moke.assistant.dto.LoginResponse;
 import com.moke.assistant.dto.RegisterRequest;
+import com.moke.assistant.dto.UpdateUserInfoRequest;
 import com.moke.assistant.entity.User;
 import com.moke.assistant.repository.UserRepository;
 import com.moke.assistant.service.UserService;
 import com.moke.assistant.utils.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class UserServiceImpl implements UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -93,5 +101,47 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findById(Long id) {
         return userRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public User updateUserInfo(Long userId, UpdateUserInfoRequest request) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
+            logger.error("用户不存在，用户ID: {}", userId);
+            throw new ServiceException("用户不存在");
+        }
+        
+        User user = userOpt.get();
+        
+        // 更新用户名（如果提供）
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
+            // 检查新用户名是否已被其他用户使用
+            User existingUser = userRepository.findByUsername(request.getUsername());
+            if (existingUser != null && !existingUser.getId().equals(userId)) {
+                throw new ServiceException("用户名已被使用");
+            }
+            user.setUsername(request.getUsername());
+        }
+        
+        // 更新头像URL
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+        
+        // 更新年龄
+        if (request.getAge() != null) {
+            user.setAge(request.getAge());
+        }
+        
+        // 更新学科
+        if (request.getSubject() != null) {
+            user.setSubject(request.getSubject());
+        }
+        
+        // 保存到数据库
+        User savedUser = userRepository.save(user);
+        logger.info("用户信息更新成功，用户ID: {}", userId);
+        
+        return savedUser;
     }
 }
