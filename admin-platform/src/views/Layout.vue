@@ -58,6 +58,11 @@
             <template #title>学生画像管理</template>
           </el-menu-item>
           
+          <el-menu-item index="/teacher-portrait">
+            <el-icon><UserFilled /></el-icon>
+            <template #title>教师画像管理</template>
+          </el-menu-item>
+          
           <el-menu-item index="/lesson-plan">
             <el-icon><Document /></el-icon>
             <template #title>教案管理</template>
